@@ -104,7 +104,7 @@ vim.o.number = true
 --  Experiment for yourself to see if you like it!
 vim.o.relativenumber = true
 
-vim.o.termguicolors = false
+vim.o.termguicolors = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.o.mouse = 'a'
@@ -286,6 +286,34 @@ require('lazy').setup({
     },
   },
 
+  {
+    'uZer/pywal16.nvim',
+    config = function()
+      require('pywal16').setup()
+      vim.cmd.colorscheme 'pywal16'
+    end,
+    priority = 1000, -- Make sure it loads before other plugins that set colors
+  },
+
+  {
+    'nvim-lualine/lualine.nvim',
+    dependencies = { 'nvim-tree/nvim-web-devicons' }, -- optional, for icons
+    config = function()
+      require('lualine').setup {
+        options = {
+          theme = 'pywal16-nvim', -- Use the pywal16 theme for lualine
+        },
+      }
+    end,
+  },
+
+  {
+    'norcalli/nvim-colorizer.lua',
+    config = function()
+      require('colorizer').setup()
+    end,
+    event = { 'BufReadPre', 'BufNewFile' },
+  },
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -892,15 +920,15 @@ require('lazy').setup({
   --     vim.cmd.colorscheme 'tokyonight-night'
   --   end,
   -- },
-  {
-    'dylanaraps/wal.vim',
-    lazy = false,
-    priority = 1000,
-    opts = { transparent = true },
-    config = function()
-      vim.cmd.colorscheme 'wal'
-    end,
-  },
+  -- {
+  --   'dylanaraps/wal.vim',
+  --   lazy = false,
+  --   priority = 1000,
+  --   opts = { transparent = true },
+  --   config = function()
+  --     vim.cmd.colorscheme 'wal'
+  --   end,
+  -- },
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
