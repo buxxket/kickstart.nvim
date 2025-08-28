@@ -9,25 +9,28 @@ vim.lsp.enable 'csharp_ls'
 
 vim.g.have_nerd_font = true
 
--- Auto convert md2githubhtml
 vim.api.nvim_create_autocmd('BufWritePost', {
   pattern = '*.md',
   callback = function()
-    local marker_found = false
     for _, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
       if line == '<!--md2githubhtml-->' then
-        marker_found = true
+        local filepath = vim.fn.expand '%:p'
+        vim.fn.jobstart({ os.getenv 'HOME' .. '/bin/md2githubhtml', filepath }, {
+          on_exit = function(_, code, _)
+            vim.schedule(function()
+              if code == 0 then
+                vim.notify('md2githubhtml: Conversion successful for ' .. filepath, vim.log.levels.INFO)
+              else
+                vim.notify('md2githubhtml: Conversion failed for ' .. filepath, vim.log.levels.ERROR)
+              end
+            end)
+          end,
+          stdout_buffered = true,
+          stderr_buffered = true,
+          detach = true,
+        })
         break
       end
-    end
-    print('BufWritePost triggered for ' .. vim.fn.expand '%:p')
-    if marker_found then
-      print 'Marker found, running script...'
-      local filepath = vim.fn.expand '%:p'
-      local result = vim.fn.system { 'bash', os.getenv 'HOME' .. '/bin/md2githubhtml', filepath }
-      print('md2githubhtml result: ' .. result)
-    else
-      print 'Marker NOT found, script skipped.'
     end
   end,
 })
