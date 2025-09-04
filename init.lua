@@ -1,10 +1,6 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
--- Custom LSPs
-vim.lsp.enable 'bashls'
-vim.lsp.enable 'csharp_ls'
-
 require 'autocmds'
 
 --  For more options, you can see `:help option-list`
@@ -19,11 +15,7 @@ vim.o.relativenumber = true
 vim.o.termguicolors = true
 vim.o.mouse = 'a'
 vim.o.showmode = false
-
-vim.schedule(function() -- Sync clipboard between OS and Neovim.
-  vim.o.clipboard = 'unnamedplus'
-end)
-
+vim.o.wrap = false
 vim.o.breakindent = true
 vim.o.undofile = true
 vim.o.ignorecase = true
@@ -34,11 +26,15 @@ vim.o.timeoutlen = 300
 vim.o.splitright = true
 vim.o.splitbelow = true
 vim.o.list = true
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 vim.o.inccommand = 'split'
 vim.o.cursorline = false
 vim.o.scrolloff = 10
 vim.o.confirm = true
+vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.schedule(function() -- Sync clipboard between OS and Neovim.
+  vim.o.clipboard = 'unnamedplus'
+end)
+vim.o.colorcolumn = '80'
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -71,6 +67,10 @@ rtp:prepend(lazypath)
 
 -- [[ Configure and install plugins ]]
 require('lazy').setup({
+
+  { 'nvim-treesitter/nvim-treesitter-context', opts = {} },
+  { 'windwp/nvim-autopairs', event = 'InsertEnter', config = true },
+
   'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
 
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
@@ -89,8 +89,9 @@ require('lazy').setup({
   {
     'uZer/pywal16.nvim',
     config = function()
-      require('pywal16').setup()
+      pcall(require('pywal16').setup)
       vim.cmd.colorscheme 'pywal16'
+      vim.cmd [[ highlight ColorColumn guibg=#2a2a2a ]]
     end,
     priority = 1000, -- Make sure it loads before other plugins that set colors
   },
@@ -110,7 +111,7 @@ require('lazy').setup({
   {
     'norcalli/nvim-colorizer.lua',
     config = function()
-      require('colorizer').setup()
+      pcall(require('colorizer').setup)
     end,
     event = { 'BufReadPre', 'BufNewFile' },
   },
@@ -481,19 +482,23 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
-        --
 
+        basedpyright = {},
+        bashls = {
+          filetypes = { 'sh', 'zsh' },
+          settings = {
+            bashIde = {
+              globPattern = '*@(.sh|.inc|.bash|.command|.zsh|.zshrc|.zshenv|.zprofile|.zlogin)',
+            },
+          },
+        },
+        csharp_ls = {},
+        docker_compose_language_service = {},
+        jsonls = {},
+        markdown_oxide = {},
+        shfmt = {
+          filetypes = { 'sh', 'zsh' },
+        },
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -556,7 +561,7 @@ require('lazy').setup({
         function()
           require('conform').format { async = true, lsp_format = 'fallback' }
         end,
-        mode = '',
+        mode = 'n',
         desc = '[F]ormat buffer',
       },
     },
@@ -769,7 +774,6 @@ require('lazy').setup({
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   -- require 'kickstart.plugins.neo-tree',
-  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
@@ -785,20 +789,36 @@ require('lazy').setup({
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table
-    icons = vim.g.have_nerd_font and {} or {
-      cmd = '⌘',
-      config = '🛠',
-      event = '📅',
-      ft = '📂',
-      init = '⚙',
-      keys = '🗝',
-      plugin = '🔌',
-      runtime = '💻',
-      require = '🌙',
-      source = '📄',
-      start = '🚀',
-      task = '📌',
-      lazy = '💤 ',
+    -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
+    --    This is the easiest way to modularize your config.
+    --
+    --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
+    -- { import = 'custom.plugins' },
+    --
+    -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
+    -- Or use telescope!
+    -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
+    -- you can continue same window with `<space>sr` which resumes last telescope search
+  },
+  {
+    ui = {
+      -- If you are using a Nerd Font: set icons to an empty table which will use the
+      -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table
+      icons = vim.g.have_nerd_font and {} or {
+        cmd = '⌘',
+        config = '🛠',
+        event = '📅',
+        ft = '📂',
+        init = '⚙',
+        keys = '🗝',
+        plugin = '🔌',
+        runtime = '💻',
+        require = '🌙',
+        source = '📄',
+        start = '🚀',
+        task = '📌',
+        lazy = '💤 ',
+      },
     },
   },
 })

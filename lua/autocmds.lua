@@ -8,9 +8,30 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
-vim.api.nvim_create_autocmd({ 'InsertLeave', 'TextChanged' }, {
+-- vim.api.nvim_create_autocmd({ 'InsertLeave', 'TextChanged' }, {
+--   pattern = { '*.md', '*.markdown' },
+--   command = 'silent! wall',
+--   nested = true,
+-- })
+
+local debounce_timer = nil
+
+vim.api.nvim_create_autocmd({ 'InsertLeave', 'TextChanged', 'TextChangedI' }, {
   pattern = { '*.md', '*.markdown' },
-  command = 'silent! wall',
+  callback = function()
+    if debounce_timer then
+      debounce_timer:stop()
+      debounce_timer:close()
+    end
+    debounce_timer = vim.loop.new_timer()
+    debounce_timer:start(
+      500,
+      0,
+      vim.schedule_wrap(function()
+        vim.cmd 'silent! wall'
+      end)
+    )
+  end,
   nested = true,
 })
 
@@ -21,15 +42,15 @@ vim.api.nvim_create_autocmd('BufWritePost', {
       if line == '<!--md2githubhtml-->' then
         local filepath = vim.fn.expand '%:p'
         vim.fn.jobstart({ os.getenv 'HOME' .. '/bin/md2githubhtml', filepath }, {
-          on_exit = function(_, code, _)
-            vim.schedule(function()
-              if code == 0 then
-                vim.notify('md2githubhtml: Conversion successful for ' .. filepath, vim.log.levels.INFO)
-              else
-                vim.notify('md2githubhtml: Conversion failed for ' .. filepath, vim.log.levels.ERROR)
-              end
-            end)
-          end,
+          -- on_exit = function(_, code, _)
+          --   vim.schedule(function()
+          --     if code == 0 then
+          --       vim.notify('md2githubhtml: Conversion successful for ' .. filepath, vim.log.levels.INFO)
+          --     else
+          --       vim.notify('md2githubhtml: Conversion failed for ' .. filepath, vim.log.levels.ERROR)
+          --     end
+          --   end)
+          -- end,
           stdout_buffered = true,
           stderr_buffered = true,
           detach = true,
